@@ -1,4 +1,47 @@
-# AI Kubernetes Troubleshooting Agent - High Level Design (HLD)
+# AI Kubernetes Troubleshooting Agent
+
+On-demand Kubernetes troubleshooting: investigate a cluster, reason about failures, and show a diagnosis in the UI.
+
+## Getting Started
+
+Copy environment files, then start the stack:
+
+```bash
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env.local
+docker compose up --build
+```
+
+Access:
+
+- Frontend: http://localhost:3000
+- Backend health: http://localhost:8000/health
+
+Local development without Docker:
+
+```bash
+# Backend
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+
+# Frontend (separate terminal)
+cd frontend
+npm install
+npm run dev
+```
+
+The application now includes kubectl-based evidence collection, OpenRouter-backed reasoning with a local fallback, cluster context selection, and an InsForge-authenticated dashboard. Set `NEXT_PUBLIC_INSFORGE_BASE_URL` and `NEXT_PUBLIC_INSFORGE_ANON_KEY` in `frontend/.env.local`, then run the SQL in `docs/insforge.sql` to enable history storage.
+
+The backend reads the local kubeconfig through `kubectl`. Set `KUBECONFIG_PATH` when the default kubeconfig is not being used. Configure either the InsForge Model Gateway values (`OPENROUTER_API_KEY` and `OPENROUTER_MODEL`) or an OpenAI key (`OPENAI_API_KEY` and `OPENAI_MODEL`). Without either provider, the deterministic Kubernetes diagnosis fallback is used.
+
+Intentional failure manifests for CrashLoopBackOff, ImagePullBackOff, OOMKilled, and Service selector mismatch can be added under `docs/` when testing against a disposable cluster.
+
+---
+
+# High Level Design (HLD)
 
 ## Goal
 

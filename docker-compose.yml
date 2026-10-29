@@ -1,0 +1,37 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment:
+      CORS_ORIGINS: http://localhost:3000
+      KUBECONFIG_PATH: ${KUBECONFIG_PATH:-}
+      KUBECONFIG_SERVER_HOST: ${KUBECONFIG_SERVER_HOST:-host.docker.internal}
+      KUBECTL_INSECURE_SKIP_TLS_VERIFY: ${KUBECTL_INSECURE_SKIP_TLS_VERIFY:-true}
+      REQUIRE_AUTH: ${REQUIRE_AUTH:-false}
+    volumes:
+      - ${KUBECONFIG_HOST_PATH:-~/.kube}:/root/.kube:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+        NEXT_PUBLIC_INSFORGE_BASE_URL: ${NEXT_PUBLIC_INSFORGE_BASE_URL:-}
+        NEXT_PUBLIC_INSFORGE_ANON_KEY: ${NEXT_PUBLIC_INSFORGE_ANON_KEY:-}
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+      NEXT_PUBLIC_INSFORGE_BASE_URL: ${NEXT_PUBLIC_INSFORGE_BASE_URL:-}
+      NEXT_PUBLIC_INSFORGE_ANON_KEY: ${NEXT_PUBLIC_INSFORGE_ANON_KEY:-}
+    depends_on:
+      - backend
+    restart: unless-stopped
